@@ -7,6 +7,7 @@ import io.pinect.azeron.example.server.azeron.domain.repository.MongoAzeronMessa
 import io.pinect.azeron.server.domain.entity.MessageEntity;
 import io.pinect.azeron.server.domain.repository.MessageRepository;
 import io.pinect.azeron.server.service.tracker.ClientTracker;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 @Service("messageRepository")
+@Log4j2
 public class MyAzeronServerMessageRepository implements MessageRepository {
     private final MongoAzeronMessageRepository mongoAzeronMessageRepository;
     private final ClientTracker clientTracker;
@@ -37,11 +39,13 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
     public MessageEntity addMessage(MessageEntity messageEntity) {
         MessageEntity result = null;
         try {
+            log.trace("Saving message to repository -> "+ messageEntity.toString());
             mongoAzeronMessageRepository.save(new MongoAzeronMessageEntity(messageEntity));
         }catch (DuplicateKeyException | org.springframework.dao.DuplicateKeyException e){
             MongoAzeronMessageEntity mongoAzeronMessageEntity = mongoAzeronMessageRepository.findByMessageId(messageEntity.getMessageId());
             mongoAzeronMessageEntity.fill(messageEntity);
             mongoAzeronMessageRepository.save(mongoAzeronMessageEntity);
+            log.trace("Duplicate message found, re-saving -> "+ messageEntity.toString());
             result = mongoAzeronMessageEntity;
         }
         return result;
@@ -50,32 +54,32 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
     @Override
     @CachePut(value = "azeron_server", key = "'message_'.concat(#messageId)", unless="#result == null")
     public MessageEntity seenMessage(String messageId, String serviceName) {
+        log.trace("Adding seen for message "+ messageId);
         MongoAzeronMessageEntity messageEntity = mongoAzeronMessageRepository.findByMessageId(messageId);
         if(messageEntity == null){
-            //todo: queue to add seen when for message later
+            messageEntity = mongoAzeronMessageRepository.findByMessageId(messageId);
+
+            List<String> seenSubscribers = messageEntity.getSeenSubscribers();
+            if(seenSubscribers == null) {
+                seenSubscribers = new ArrayList<>();
+            }
+
+            List<String> subscribers = messageEntity.getSeenSubscribers();
+            if(subscribers == null)
+                subscribers = clientTracker.getChannelsOfService(serviceName);
+
+            seenSubscribers.add(serviceName);
+            messageEntity.setSubscribers(subscribers);
+            messageEntity.setSeenSubscribers(seenSubscribers);
+            messageEntity.setSeenNeeded(subscribers.size());
+            messageEntity.setSeenCount(messageEntity.getSeenCount() + 1);
+            mongoAzeronMessageRepository.save(messageEntity);
         }
+
         mongoTemplate.upsert(Query.query(Criteria.where("messageId").is(messageId)),
-                new Update().addToSet("seenSubscribers", serviceName).inc("seenCount", 1),
+                new Update().set("channel", messageEntity.getChannel()).set("message", messageEntity.getMessage()).set("sender",messageEntity.getSender()).addToSet("subscribers", messageEntity.getSubscribers()).set("seenNeeded", messageEntity.getSeenNeeded()).addToSet("seenSubscribers", serviceName).inc("seenCount", 1),
                 MongoAzeronMessageEntity.class);
 
-        if(messageEntity == null){
-            messageEntity = mongoAzeronMessageRepository.findByMessageId(messageId);
-        }
-
-        List<String> seenSubscribers = messageEntity.getSeenSubscribers();
-        if(seenSubscribers == null) {
-            seenSubscribers = new ArrayList<>();
-        }
-
-        List<String> subscribers = messageEntity.getSeenSubscribers();
-        if(subscribers == null)
-            subscribers = clientTracker.getChannelsOfService(serviceName);
-
-        seenSubscribers.add(serviceName);
-        messageEntity.setSubscribers(subscribers);
-        messageEntity.setSeenSubscribers(seenSubscribers);
-        messageEntity.setSeenNeeded(subscribers.size());
-        messageEntity.setSeenCount(messageEntity.getSeenCount() + 1);
         return messageEntity;
     }
 

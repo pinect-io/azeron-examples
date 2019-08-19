@@ -3,10 +3,12 @@ package io.pinect.azeron.example.server.azeron.domain;
 import io.pinect.azeron.server.domain.entity.MessageEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 
 @Getter
 @Setter
+@ToString
 public class MongoAzeronMessageEntity extends MessageEntity {
     @Id
     private String id;
