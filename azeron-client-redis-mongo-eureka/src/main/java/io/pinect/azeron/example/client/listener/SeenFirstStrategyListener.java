@@ -13,17 +13,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Log4j2
-public class FullStrategyListener extends AbstractAzeronMessageHandler<SimpleAzeronMessage> {
+public class SeenFirstStrategyListener extends AbstractAzeronMessageHandler<SimpleAzeronMessage> {
     private final String serviceName;
     @Autowired
-    public FullStrategyListener(AzeronMessageHandlerDependencyHolder azeronMessageHandlerDependencyHolder, @Value("${spring.application.name}") String serviceName) {
+    public SeenFirstStrategyListener(AzeronMessageHandlerDependencyHolder azeronMessageHandlerDependencyHolder, @Value("${spring.application.name}") String serviceName) {
         super(azeronMessageHandlerDependencyHolder);
         this.serviceName = serviceName;
     }
 
     @Override
     public HandlerPolicy policy() {
-        return HandlerPolicy.FULL;
+        return HandlerPolicy.SEEN_FIRST;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class FullStrategyListener extends AbstractAzeronMessageHandler<SimpleAze
 
     @Override
     public String eventName() {
-        return "full_event_name";
+        return "seen_first_event_name";
     }
 
     @Override

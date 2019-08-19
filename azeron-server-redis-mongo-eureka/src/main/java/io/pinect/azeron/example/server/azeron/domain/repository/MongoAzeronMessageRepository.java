@@ -12,6 +12,6 @@ public interface MongoAzeronMessageRepository extends MongoRepository<MongoAzero
     MongoAzeronMessageEntity findByMessageId(String messageId);
     boolean existsByMessageId(String messageId);
     void deleteByMessageId(String messageId);
-    List<MessageEntity> findAllBySubscribersInAndSeenSubscribersNin(String service, String ninService, Pageable pageable);
-    int countAllBySubscribersInAndSeenSubscribersNin(String service, String ninService);
+    List<MessageEntity> findAllBySubscribersInAndSeenSubscribersNotIn(String service, String ninService, Pageable pageable);
+    int countAllBySubscribersInAndSeenSubscribersNotIn(String service, String ninService);
 }

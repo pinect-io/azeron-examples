@@ -12,17 +12,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @FeignClient("azeron-server")
 public interface AzeronServerFeign {
-    @GetMapping("/info")
+    @GetMapping("/api/v1/info")
     @ResponseBody
     InfoResultDto getServersInfo();
 
-    @GetMapping("/nats") @ResponseBody
+    @GetMapping("/api/v1/nats") @ResponseBody
     NatsConfigModel getNatsDetails();
 
-    @GetMapping("/ping")
+    @GetMapping("/api/v1/ping")
     @ResponseBody String ping();
 
-    @PutMapping("/seen")
+    @PutMapping("/api/v1/seen")
     @ResponseBody
     SeenResponseDto seenMessages(@RequestBody SeenDto seenDto);
 }

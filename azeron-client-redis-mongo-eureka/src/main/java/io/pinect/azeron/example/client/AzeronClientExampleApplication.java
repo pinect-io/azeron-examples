@@ -23,10 +23,22 @@ public class AzeronClientExampleApplication {
         SpringApplication.run(AzeronClientExampleApplication.class, args);
     }
 
-    @GetMapping("/do")
+    @GetMapping("/full")
     public @ResponseBody String sendSimpleMessage(@RequestParam("text") String text){
-        simpleMessagePublisher.publishSimpleTextMessage(text);
+        simpleMessagePublisher.publishSimpleTextMessage(text, "full_event_name");
         return "OK";
     }
 
+    @GetMapping("/async")
+    public @ResponseBody String sendSimpleMessageAsyncSeen(@RequestParam("text") String text){
+        simpleMessagePublisher.publishSimpleTextMessage(text, "async_event_name");
+        return "OK";
+    }
+
+
+    @GetMapping("/loosable")
+    public @ResponseBody String sendSimpleMessageSyncFirst(@RequestParam("text") String text){
+        simpleMessagePublisher.publishSimpleTextMessage(text, "seen_first_event_name");
+        return "OK";
+    }
 }

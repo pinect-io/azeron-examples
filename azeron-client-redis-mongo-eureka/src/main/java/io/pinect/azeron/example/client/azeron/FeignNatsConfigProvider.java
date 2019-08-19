@@ -11,7 +11,7 @@ import org.springframework.retry.RetryContext;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
-@Service
+@Service("natsConfigProvider")
 @Log4j2
 public class FeignNatsConfigProvider implements NatsConfigProvider {
     private final AzeronServerFeign azeronServerFeign;
@@ -27,11 +27,13 @@ public class FeignNatsConfigProvider implements NatsConfigProvider {
 
     @Override
     public NatsConfigModel getNatsConfig() {
+        log.trace("Getting nats config model");
         try {
             return (NatsConfigModel) this.retryTemplate.execute(new RetryCallback<NatsConfigModel, Throwable>() {
                 public NatsConfigModel doWithRetry(RetryContext retryContext) throws Throwable {
                     InfoResultDto infoResultDto = azeronServerFeign.getServersInfo();
-                    return natsConfigChoserService.getBestNatsConfig(infoResultDto.getResults());
+                    NatsConfigModel bestNatsConfig = natsConfigChoserService.getBestNatsConfig(infoResultDto.getResults());
+                    return bestNatsConfig;
                 }
             });
         } catch (Throwable var2) {

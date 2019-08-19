@@ -13,17 +13,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Log4j2
-public class FullStrategyListener extends AbstractAzeronMessageHandler<SimpleAzeronMessage> {
+public class SeenAsyncStrategyListener extends AbstractAzeronMessageHandler<SimpleAzeronMessage> {
     private final String serviceName;
     @Autowired
-    public FullStrategyListener(AzeronMessageHandlerDependencyHolder azeronMessageHandlerDependencyHolder, @Value("${spring.application.name}") String serviceName) {
+    public SeenAsyncStrategyListener(AzeronMessageHandlerDependencyHolder azeronMessageHandlerDependencyHolder, @Value("${spring.application.name}") String serviceName) {
         super(azeronMessageHandlerDependencyHolder);
         this.serviceName = serviceName;
     }
 
     @Override
     public HandlerPolicy policy() {
-        return HandlerPolicy.FULL;
+        return HandlerPolicy.SEEN_ASYNC;
     }
 
     @Override
@@ -37,13 +37,13 @@ public class FullStrategyListener extends AbstractAzeronMessageHandler<SimpleAze
             @Override
             public void process(SimpleAzeronMessage simpleAzeronMessage) {
                 String text = simpleAzeronMessage.getText();
-                log.info("Processing text: "+ text);
+                log.info("[ASYNC] Processing text: "+ text);
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
                     log.error(e);
                 }
-                log.info("Finished processing text: "+ text);
+                log.info("[ASYNC] Finished processing text: "+ text);
             }
         };
     }
@@ -53,14 +53,14 @@ public class FullStrategyListener extends AbstractAzeronMessageHandler<SimpleAze
         return new AzeronErrorHandler() {
             @Override
             public void onError(Exception e, MessageDto messageDto) {
-                log.error("Error while handling message -> "+ messageDto, e);
+                log.error("[ASYNC] Error while handling message -> "+ messageDto, e);
             }
         };
     }
 
     @Override
     public String eventName() {
-        return "full_event_name";
+        return "async_event_name";
     }
 
     @Override

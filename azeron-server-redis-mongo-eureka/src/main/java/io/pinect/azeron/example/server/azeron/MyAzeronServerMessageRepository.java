@@ -6,6 +6,7 @@ import io.pinect.azeron.example.server.azeron.domain.OffsetLimitPageable;
 import io.pinect.azeron.example.server.azeron.domain.repository.MongoAzeronMessageRepository;
 import io.pinect.azeron.server.domain.entity.MessageEntity;
 import io.pinect.azeron.server.domain.repository.MessageRepository;
+import io.pinect.azeron.server.service.tracker.ClientTracker;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -16,15 +17,18 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service("messageRepository")
 public class MyAzeronServerMessageRepository implements MessageRepository {
     private final MongoAzeronMessageRepository mongoAzeronMessageRepository;
+    private final ClientTracker clientTracker;
     private final MongoTemplate mongoTemplate;
 
-    public MyAzeronServerMessageRepository(MongoAzeronMessageRepository mongoAzeronMessageRepository, MongoTemplate mongoTemplate) {
+    public MyAzeronServerMessageRepository(MongoAzeronMessageRepository mongoAzeronMessageRepository, ClientTracker clientTracker, MongoTemplate mongoTemplate) {
         this.mongoAzeronMessageRepository = mongoAzeronMessageRepository;
+        this.clientTracker = clientTracker;
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -53,11 +57,24 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
         mongoTemplate.upsert(Query.query(Criteria.where("messageId").is(messageId)),
                 new Update().addToSet("seenSubscribers", serviceName).inc("seenCount", 1),
                 MongoAzeronMessageEntity.class);
+
+        if(messageEntity == null){
+            messageEntity = mongoAzeronMessageRepository.findByMessageId(messageId);
+        }
+
         List<String> seenSubscribers = messageEntity.getSeenSubscribers();
-        if(seenSubscribers == null)
+        if(seenSubscribers == null) {
             seenSubscribers = new ArrayList<>();
+        }
+
+        List<String> subscribers = messageEntity.getSeenSubscribers();
+        if(subscribers == null)
+            subscribers = clientTracker.getChannelsOfService(serviceName);
 
         seenSubscribers.add(serviceName);
+        messageEntity.setSubscribers(subscribers);
+        messageEntity.setSeenSubscribers(seenSubscribers);
+        messageEntity.setSeenNeeded(subscribers.size());
         messageEntity.setSeenCount(messageEntity.getSeenCount() + 1);
         return messageEntity;
     }
@@ -75,10 +92,11 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
         mongoAzeronMessageRepository.deleteByMessageId(messageId);
     }
 
+    //todo
     @Override
-    public MessageResult getUnseenMessagesOfService(String serviceName, int offset, int limit) {
-        List<MessageEntity> messageEntities = mongoAzeronMessageRepository.findAllBySubscribersInAndSeenSubscribersNin(serviceName, serviceName, new OffsetLimitPageable(offset, limit));
-        int i = mongoAzeronMessageRepository.countAllBySubscribersInAndSeenSubscribersNin(serviceName, serviceName);
+    public MessageResult getUnseenMessagesOfService(String serviceName, int offset, int limit, Date before) {
+        List<MessageEntity> messageEntities = mongoAzeronMessageRepository.findAllBySubscribersInAndSeenSubscribersNotIn(serviceName, serviceName, new OffsetLimitPageable(offset, limit));
+        int i = mongoAzeronMessageRepository.countAllBySubscribersInAndSeenSubscribersNotIn(serviceName, serviceName);
         return MessageResult.builder().hasMore(i > messageEntities.size()).messages(messageEntities).build();
     }
 }
