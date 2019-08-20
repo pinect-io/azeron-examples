@@ -24,12 +24,13 @@ public class MongoAzeronMessageEntity extends MessageEntity {
     public void fill(MessageEntity messageEntity){
         setMessageId(messageEntity.getMessageId());
         setMessage(messageEntity.getMessage());
-        if(this.getSeenSubscribers() == null)
+        if(this.getSubscribers() == null)
             setSubscribers(messageEntity.getSubscribers());
         setChannel(messageEntity.getChannel());
         setCompleted(messageEntity.isCompleted());
         setDate(messageEntity.getDate());
         setMessage(messageEntity.getMessage());
+        setSeenNeeded(messageEntity.getSeenNeeded());
         setSeenCount(messageEntity.getSeenCount());
         if(getSeenSubscribers() == null)
             setSeenSubscribers(messageEntity.getSeenSubscribers());

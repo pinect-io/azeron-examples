@@ -35,52 +35,32 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
     }
 
     @Override
-    @Cacheable(value = "azeron_server", key = "'message_'.concat(#messageEntity.messageId)", unless="#result == null", sync = true)
     public MessageEntity addMessage(MessageEntity messageEntity) {
-        MessageEntity result = null;
         try {
             log.trace("Saving message to repository -> "+ messageEntity.toString());
-            mongoAzeronMessageRepository.save(new MongoAzeronMessageEntity(messageEntity));
+            return mongoAzeronMessageRepository.save(new MongoAzeronMessageEntity(messageEntity));
         }catch (DuplicateKeyException | org.springframework.dao.DuplicateKeyException e){
-            MongoAzeronMessageEntity mongoAzeronMessageEntity = mongoAzeronMessageRepository.findByMessageId(messageEntity.getMessageId());
-            mongoAzeronMessageEntity.fill(messageEntity);
-            mongoAzeronMessageRepository.save(mongoAzeronMessageEntity);
-            log.trace("Duplicate message found, re-saving -> "+ messageEntity.toString());
-            result = mongoAzeronMessageEntity;
+            log.trace("Duplicate message found. Maybe seen has reached sooner. Updating message body -> "+ messageEntity.toString());
+            mongoTemplate.upsert(Query.query(Criteria.where("messageId").is(messageEntity.getMessageId())),
+                    new Update()
+                            .set("message",messageEntity.getMessage())
+                            .set("date",messageEntity.getDate())
+                            .set("channel",messageEntity.getChannel())
+                            .set("subscribers",messageEntity.getSubscribers())
+                            .set("seenNeeded",messageEntity.getSeenNeeded())
+                            .set("sender",messageEntity.getSender()),
+                    MongoAzeronMessageEntity.class);
+            return mongoAzeronMessageRepository.findByMessageId(messageEntity.getMessageId());
         }
-        return result;
     }
 
     @Override
-    @CachePut(value = "azeron_server", key = "'message_'.concat(#messageId)", unless="#result == null")
     public MessageEntity seenMessage(String messageId, String serviceName) {
         log.trace("Adding seen for message "+ messageId);
-        MongoAzeronMessageEntity messageEntity = mongoAzeronMessageRepository.findByMessageId(messageId);
-        if(messageEntity == null){
-            messageEntity = mongoAzeronMessageRepository.findByMessageId(messageId);
-
-            List<String> seenSubscribers = messageEntity.getSeenSubscribers();
-            if(seenSubscribers == null) {
-                seenSubscribers = new ArrayList<>();
-            }
-
-            List<String> subscribers = messageEntity.getSeenSubscribers();
-            if(subscribers == null)
-                subscribers = clientTracker.getChannelsOfService(serviceName);
-
-            seenSubscribers.add(serviceName);
-            messageEntity.setSubscribers(subscribers);
-            messageEntity.setSeenSubscribers(seenSubscribers);
-            messageEntity.setSeenNeeded(subscribers.size());
-            messageEntity.setSeenCount(messageEntity.getSeenCount() + 1);
-            mongoAzeronMessageRepository.save(messageEntity);
-        }
-
         mongoTemplate.upsert(Query.query(Criteria.where("messageId").is(messageId)),
-                new Update().set("channel", messageEntity.getChannel()).set("message", messageEntity.getMessage()).set("sender",messageEntity.getSender()).addToSet("subscribers", messageEntity.getSubscribers()).set("seenNeeded", messageEntity.getSeenNeeded()).addToSet("seenSubscribers", serviceName).inc("seenCount", 1),
+                new Update().addToSet("seenSubscribers", serviceName).inc("seenCount", 1),
                 MongoAzeronMessageEntity.class);
-
-        return messageEntity;
+        return null;
     }
 
     @Override
@@ -91,7 +71,6 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
     }
 
     @Override
-    @CacheEvict(value = "azeron_server", key = "'message_'.concat(#messageId)")
     public void removeMessage(String messageId) {
         mongoAzeronMessageRepository.deleteByMessageId(messageId);
     }
