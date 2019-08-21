@@ -25,12 +25,10 @@ import java.util.List;
 @Log4j2
 public class MyAzeronServerMessageRepository implements MessageRepository {
     private final MongoAzeronMessageRepository mongoAzeronMessageRepository;
-    private final ClientTracker clientTracker;
     private final MongoTemplate mongoTemplate;
 
-    public MyAzeronServerMessageRepository(MongoAzeronMessageRepository mongoAzeronMessageRepository, ClientTracker clientTracker, MongoTemplate mongoTemplate) {
+    public MyAzeronServerMessageRepository(MongoAzeronMessageRepository mongoAzeronMessageRepository, MongoTemplate mongoTemplate) {
         this.mongoAzeronMessageRepository = mongoAzeronMessageRepository;
-        this.clientTracker = clientTracker;
         this.mongoTemplate = mongoTemplate;
     }
 
