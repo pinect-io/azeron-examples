@@ -15,10 +15,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Log4j2
-public class SimpleMessagePublisher extends EventMessagePublisher {
+public class SimpleNatsMessagePublisher extends EventMessagePublisher {
 
     @Autowired
-    public SimpleMessagePublisher(AtomicNatsHolder atomicNatsHolder, ObjectMapper objectMapper, AzeronServerStatusTracker azeronServerStatusTracker, FallbackRepository fallbackRepository, RetryTemplate eventPublishRetryTemplate, @Value("${spring.application.name}") String serviceName) {
+    public SimpleNatsMessagePublisher(AtomicNatsHolder atomicNatsHolder, ObjectMapper objectMapper, AzeronServerStatusTracker azeronServerStatusTracker, FallbackRepository fallbackRepository, RetryTemplate eventPublishRetryTemplate, @Value("${spring.application.name}") String serviceName) {
         super(atomicNatsHolder, objectMapper, azeronServerStatusTracker, fallbackRepository, eventPublishRetryTemplate, serviceName);
     }
 
@@ -27,7 +27,7 @@ public class SimpleMessagePublisher extends EventMessagePublisher {
         try {
             String value = getObjectMapper().writeValueAsString(new SimpleAzeronMessage(text));
             log.trace("Publishing message "+ value + " to channel `"+channelName+"`");
-            sendMessage(channelName, value, PublishStrategy.AZERON);
+            sendMessage(channelName, value, PublishStrategy.NATS);
         } catch (Exception e) {
             e.printStackTrace();
         }
