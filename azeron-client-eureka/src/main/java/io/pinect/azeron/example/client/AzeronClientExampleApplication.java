@@ -41,4 +41,10 @@ public class AzeronClientExampleApplication {
         simpleMessagePublisher.publishSimpleTextMessage(text, "seen_first_event_name");
         return "OK";
     }
+
+    @GetMapping("/noAzeron")
+    public @ResponseBody String sendSimpleNatsMessage(@RequestParam("text") String text){
+        simpleMessagePublisher.publishSimpleTextMessage(text, "no_azeron_event_name");
+        return "OK";
+    }
 }

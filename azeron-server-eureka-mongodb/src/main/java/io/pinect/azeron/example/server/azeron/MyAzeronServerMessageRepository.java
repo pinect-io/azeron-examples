@@ -55,12 +55,11 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
     }
 
     @Override
-    public MessageEntity seenMessage(String messageId, String serviceName) {
+    public void seenMessage(String messageId, String serviceName) {
         log.trace("Adding seen for message "+ messageId);
         mongoTemplate.upsert(Query.query(Criteria.where("messageId").is(messageId)),
                 new Update().addToSet("seenSubscribers", serviceName).inc("seenCount", 1),
                 MongoAzeronMessageEntity.class);
-        return null;
     }
 
     @Override
@@ -78,8 +77,13 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
     //todo
     @Override
     public MessageResult getUnseenMessagesOfService(String serviceName, int offset, int limit, Date before) {
-        List<MessageEntity> messageEntities = mongoAzeronMessageRepository.findAllBySubscribersInAndSeenSubscribersNotIn(serviceName, serviceName, new OffsetLimitPageable(offset, limit));
+        List<MessageEntity> messageEntities = mongoAzeronMessageRepository.findAllBySubscribersInAndSeenSubscribersNotInAndDateBefore(serviceName, serviceName, before, new OffsetLimitPageable(offset, limit));
         int i = mongoAzeronMessageRepository.countAllBySubscribersInAndSeenSubscribersNotIn(serviceName, serviceName);
         return MessageResult.builder().hasMore(i > messageEntities.size()).messages(messageEntities).build();
+    }
+
+    @Override
+    public MessageEntity getMessage(String messageId) {
+        return mongoAzeronMessageRepository.findByMessageId(messageId);
     }
 }
