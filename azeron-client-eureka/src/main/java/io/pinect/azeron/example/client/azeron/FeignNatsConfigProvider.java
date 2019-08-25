@@ -2,8 +2,8 @@ package io.pinect.azeron.example.client.azeron;
 
 import io.pinect.azeron.client.domain.dto.in.InfoResultDto;
 import io.pinect.azeron.client.domain.model.NatsConfigModel;
-import io.pinect.azeron.client.service.NatsConfigChoserService;
 import io.pinect.azeron.client.service.api.NatsConfigProvider;
+import io.pinect.azeron.client.util.NatsConfigurationMerge;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.retry.RetryCallback;
@@ -15,13 +15,11 @@ import org.springframework.stereotype.Service;
 @Log4j2
 public class FeignNatsConfigProvider implements NatsConfigProvider {
     private final AzeronServerFeign azeronServerFeign;
-    private final NatsConfigChoserService natsConfigChoserService;
     private final RetryTemplate retryTemplate;
 
     @Autowired
-    public FeignNatsConfigProvider(AzeronServerFeign azeronServerFeign, NatsConfigChoserService natsConfigChoserService, RetryTemplate retryTemplate) {
+    public FeignNatsConfigProvider(AzeronServerFeign azeronServerFeign, RetryTemplate retryTemplate) {
         this.azeronServerFeign = azeronServerFeign;
-        this.natsConfigChoserService = natsConfigChoserService;
         this.retryTemplate = retryTemplate;
     }
 
@@ -32,8 +30,7 @@ public class FeignNatsConfigProvider implements NatsConfigProvider {
             return (NatsConfigModel) this.retryTemplate.execute(new RetryCallback<NatsConfigModel, Throwable>() {
                 public NatsConfigModel doWithRetry(RetryContext retryContext) throws Throwable {
                     InfoResultDto infoResultDto = azeronServerFeign.getServersInfo();
-                    NatsConfigModel bestNatsConfig = natsConfigChoserService.getBestNatsConfig(infoResultDto.getResults());
-                    return bestNatsConfig;
+                    return NatsConfigurationMerge.getMergedNatsConfig(infoResultDto.getResults());
                 }
             });
         } catch (Throwable var2) {
