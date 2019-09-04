@@ -6,22 +6,17 @@ import io.pinect.azeron.example.server.azeron.domain.OffsetLimitPageable;
 import io.pinect.azeron.example.server.azeron.domain.repository.MongoAzeronMessageRepository;
 import io.pinect.azeron.server.domain.entity.MessageEntity;
 import io.pinect.azeron.server.domain.repository.MessageRepository;
-import io.pinect.azeron.server.service.tracker.ClientTracker;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Service("messageRepository")
+@Service("myAzeronServerMessageRepository")
 @Log4j2
 public class MyAzeronServerMessageRepository implements MessageRepository {
     private final MongoAzeronMessageRepository mongoAzeronMessageRepository;
