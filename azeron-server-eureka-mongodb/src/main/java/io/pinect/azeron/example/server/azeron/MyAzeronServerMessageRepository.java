@@ -89,9 +89,9 @@ public class MyAzeronServerMessageRepository implements MessageRepository {
 
     @Override
     public void seenMessages(List<String> messageIds, String serviceName) {
-        mongoTemplate.upsert(Query.query(Criteria.where("messageId").in(messageIds)),
-                new Update().push("seenSubscribers", serviceName).inc("seenCount", 1),
-                MongoAzeronMessageEntity.class);
+        messageIds.forEach(messageId -> {
+            seenMessage(messageId, serviceName);
+        });
     }
 
     @Override

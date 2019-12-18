@@ -29,7 +29,7 @@ public class SimpleMessagePublisher extends EventMessagePublisher {
             log.trace("Publishing message "+ value + " to channel `"+channelName+"`");
             sendMessage(channelName, value, PublishStrategy.AZERON);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.catching(e);
         }
     }
 }
