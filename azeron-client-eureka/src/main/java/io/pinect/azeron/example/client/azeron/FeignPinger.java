@@ -25,7 +25,7 @@ public class FeignPinger implements Pinger {
         try {
             return azeronServerFeign.ping(serviceName);
         }catch (Exception e){
-            log.error(e);
+            log.catching(e);
         }
         return PongDto.builder().status(ResponseStatus.FAILED).build();
     }

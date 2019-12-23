@@ -41,7 +41,7 @@ public class SeenAsyncStrategyListener extends AbstractAzeronMessageHandler<Simp
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
-                    log.error(e);
+                    log.catching(e);
                 }
                 log.info("[ASYNC] Finished processing text: "+ text);
             }
