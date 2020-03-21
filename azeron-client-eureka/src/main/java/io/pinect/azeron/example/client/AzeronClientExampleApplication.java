@@ -1,6 +1,12 @@
 package io.pinect.azeron.example.client;
 
-import io.pinect.azeron.example.client.publisher.SimpleMessagePublisher;
+import io.pinect.azeron.example.client.dto.SimpleAzeronMessage;
+import io.pinect.azeron.example.client.publisher.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
+import nats.client.Message;
+import nats.client.MessageHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,11 +18,19 @@ import org.springframework.web.bind.annotation.RestController;
 @SpringBootApplication
 @RestController
 public class AzeronClientExampleApplication {
-    private final SimpleMessagePublisher simpleMessagePublisher;
+    private final AsyncMessagePublisher asyncMessagePublisher;
+    private final FullMessagePublisher fullMessagePublisher;
+    private final NoAzeronMessagePublisher noAzeronMessagePublisher;
+    private final SeenFirstMessagePublisher seenFirstMessagePublisher;
+    private final NatsRawMessagePublisher natsRawMessagePublisher;
 
     @Autowired
-    public AzeronClientExampleApplication(SimpleMessagePublisher simpleMessagePublisher) {
-        this.simpleMessagePublisher = simpleMessagePublisher;
+    public AzeronClientExampleApplication(AsyncMessagePublisher asyncMessagePublisher, FullMessagePublisher fullMessagePublisher, NoAzeronMessagePublisher noAzeronMessagePublisher, SeenFirstMessagePublisher seenFirstMessagePublisher, NatsRawMessagePublisher natsRawMessagePublisher) {
+        this.asyncMessagePublisher = asyncMessagePublisher;
+        this.fullMessagePublisher = fullMessagePublisher;
+        this.noAzeronMessagePublisher = noAzeronMessagePublisher;
+        this.seenFirstMessagePublisher = seenFirstMessagePublisher;
+        this.natsRawMessagePublisher = natsRawMessagePublisher;
     }
 
     public static void main(String[] args) {
@@ -25,26 +39,55 @@ public class AzeronClientExampleApplication {
 
     @GetMapping("/full")
     public @ResponseBody String sendSimpleMessage(@RequestParam("text") String text){
-        simpleMessagePublisher.publishSimpleTextMessage(text, "full_event_name");
+        fullMessagePublisher.publish(new SimpleAzeronMessage("hi - full"), null);
+        return "OK";
+    }
+
+    @Getter
+    @Setter
+    private class MessageResult {
+        boolean ok = false;
+    }
+
+    @SneakyThrows
+    @GetMapping("/nats")
+    public @ResponseBody String sendSimpleNatsMessageWithHandler(@RequestParam("text") String text){
+        MessageResult messageResult = new MessageResult();
+
+        natsRawMessagePublisher.publish(new SimpleAzeronMessage(text), new MessageHandler() {
+            @Override
+            public void onMessage(Message message) {
+                System.out.println(message.getBody());
+                synchronized (messageResult){
+                    messageResult.setOk(true);
+                    messageResult.notify();
+                }
+            }
+        });
+
+        synchronized (messageResult){
+            messageResult.wait(10000);
+        }
+
         return "OK";
     }
 
     @GetMapping("/async")
     public @ResponseBody String sendSimpleMessageAsyncSeen(@RequestParam("text") String text){
-        simpleMessagePublisher.publishSimpleTextMessage(text, "async_event_name");
+        asyncMessagePublisher.publish(new SimpleAzeronMessage("hi - async"), null);
         return "OK";
     }
 
 
     @GetMapping("/loosable")
     public @ResponseBody String sendSimpleMessageSyncFirst(@RequestParam("text") String text){
-        simpleMessagePublisher.publishSimpleTextMessage(text, "seen_first_event_name");
+        seenFirstMessagePublisher.publish(new SimpleAzeronMessage("hi - seen first"), null);
         return "OK";
     }
 
     @GetMapping("/noAzeron")
     public @ResponseBody String sendSimpleNatsMessage(@RequestParam("text") String text){
-        simpleMessagePublisher.publishSimpleTextMessage(text, "no_azeron_event_name");
+        noAzeronMessagePublisher.publish(new SimpleAzeronMessage("hi - no azeron"), null);
         return "OK";
     }
 }
