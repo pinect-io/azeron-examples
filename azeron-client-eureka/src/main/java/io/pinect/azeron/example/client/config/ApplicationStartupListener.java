@@ -5,7 +5,6 @@ import lombok.extern.log4j.Log4j2;
 import nats.client.Message;
 import nats.client.MessageHandler;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 

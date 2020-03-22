@@ -2,17 +2,12 @@ package io.pinect.azeron.example.client.listener;
 
 import io.pinect.azeron.client.domain.HandlerPolicy;
 import io.pinect.azeron.client.domain.dto.out.MessageDto;
-import io.pinect.azeron.client.domain.model.ClientConfig;
-import io.pinect.azeron.client.service.handler.AbstractAzeronMessageHandler;
-import io.pinect.azeron.client.service.handler.AzeronListener;
-import io.pinect.azeron.client.service.handler.AzeronMessageHandlerDependencyHolder;
-import io.pinect.azeron.client.service.handler.SimpleEventListener;
+import io.pinect.azeron.client.service.listener.AzeronListener;
+import io.pinect.azeron.client.service.listener.SimpleEventListener;
 import io.pinect.azeron.example.client.dto.SimpleAzeronMessage;
 import lombok.extern.log4j.Log4j2;
-import nats.client.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 @Log4j2
 @AzeronListener(eventName = "full_event_name", ofClass = SimpleAzeronMessage.class, policy = HandlerPolicy.FULL)
