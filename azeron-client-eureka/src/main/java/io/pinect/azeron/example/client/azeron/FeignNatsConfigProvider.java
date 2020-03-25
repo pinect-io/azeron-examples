@@ -29,8 +29,13 @@ public class FeignNatsConfigProvider implements NatsConfigProvider {
         try {
             return (NatsConfigModel) this.retryTemplate.execute(new RetryCallback<NatsConfigModel, Throwable>() {
                 public NatsConfigModel doWithRetry(RetryContext retryContext) throws Throwable {
-                    InfoResultDto infoResultDto = azeronServerFeign.getServersInfo();
-                    return NatsConfigurationMerge.getMergedNatsConfig(infoResultDto.getResults());
+                    try {
+                        InfoResultDto infoResultDto = azeronServerFeign.getServersInfo();
+                        return NatsConfigurationMerge.getMergedNatsConfig(infoResultDto.getResults());
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        throw e;
+                    }
                 }
             });
         } catch (Throwable var2) {

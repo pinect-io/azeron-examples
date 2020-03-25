@@ -11,9 +11,7 @@ import nats.client.MessageHandler;
         eventName = "seen_first_event_name",
         forClass = SimpleAzeronMessage.class
 )
-public class SeenFirstMessagePublisher implements EventPublisher<SimpleAzeronMessage> {
-    @Override
-    public void publish(SimpleAzeronMessage simpleAzeronMessage, MessageHandler messageHandler) {
-
-    }
+public interface SeenFirstMessagePublisher {
+    void publish(SimpleAzeronMessage simpleAzeronMessage, MessageHandler messageHandler);
+    void publish(SimpleAzeronMessage simpleAzeronMessage);
 }

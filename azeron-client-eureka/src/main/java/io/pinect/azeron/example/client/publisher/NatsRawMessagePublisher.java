@@ -12,9 +12,7 @@ import nats.client.MessageHandler;
         forClass = SimpleAzeronMessage.class,
         raw = true
 )
-public class NatsRawMessagePublisher implements EventPublisher<SimpleAzeronMessage> {
-    @Override
-    public void publish(SimpleAzeronMessage simpleAzeronMessage, MessageHandler messageHandler) {
-
-    }
+public interface NatsRawMessagePublisher {
+    void publish(SimpleAzeronMessage simpleAzeronMessage, MessageHandler messageHandler);
+    void publish(SimpleAzeronMessage simpleAzeronMessage);
 }

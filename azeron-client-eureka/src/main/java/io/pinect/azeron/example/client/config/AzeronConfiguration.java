@@ -4,7 +4,7 @@ import io.pinect.azeron.client.EnableAzeronClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
 
-@EnableAzeronClient
+@EnableAzeronClient(basePackages = "io.pinect.azeron.example.client.publisher")
 @Configuration
 @EnableFeignClients(basePackages = "io.pinect.azeron.example.client.azeron")
 public class AzeronConfiguration {

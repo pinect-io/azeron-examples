@@ -11,9 +11,7 @@ import nats.client.MessageHandler;
         eventName = "async_event_name",
         forClass = SimpleAzeronMessage.class
 )
-public class AsyncMessagePublisher implements EventPublisher<SimpleAzeronMessage> {
-    @Override
-    public void publish(SimpleAzeronMessage simpleAzeronMessage, MessageHandler messageHandler) {
-
-    }
+public interface AsyncMessagePublisher extends EventPublisher<SimpleAzeronMessage> {
+    void publish(SimpleAzeronMessage simpleAzeronMessage, MessageHandler messageHandler);
+    void publish(SimpleAzeronMessage simpleAzeronMessage);
 }

@@ -10,6 +10,7 @@ import nats.client.MessageHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -25,7 +26,7 @@ public class AzeronClientExampleApplication {
     private final NatsRawMessagePublisher natsRawMessagePublisher;
 
     @Autowired
-    public AzeronClientExampleApplication(AsyncMessagePublisher asyncMessagePublisher, FullMessagePublisher fullMessagePublisher, NoAzeronMessagePublisher noAzeronMessagePublisher, SeenFirstMessagePublisher seenFirstMessagePublisher, NatsRawMessagePublisher natsRawMessagePublisher) {
+    public AzeronClientExampleApplication(@Lazy AsyncMessagePublisher asyncMessagePublisher, FullMessagePublisher fullMessagePublisher, NoAzeronMessagePublisher noAzeronMessagePublisher, SeenFirstMessagePublisher seenFirstMessagePublisher, NatsRawMessagePublisher natsRawMessagePublisher) {
         this.asyncMessagePublisher = asyncMessagePublisher;
         this.fullMessagePublisher = fullMessagePublisher;
         this.noAzeronMessagePublisher = noAzeronMessagePublisher;
@@ -39,7 +40,8 @@ public class AzeronClientExampleApplication {
 
     @GetMapping("/full")
     public @ResponseBody String sendSimpleMessage(@RequestParam("text") String text){
-        fullMessagePublisher.publish(new SimpleAzeronMessage("hi - full"), null);
+        System.out.println(Thread.currentThread().getId());
+        fullMessagePublisher.publish(new SimpleAzeronMessage(text));
         return "OK";
     }
 
@@ -74,6 +76,7 @@ public class AzeronClientExampleApplication {
 
     @GetMapping("/async")
     public @ResponseBody String sendSimpleMessageAsyncSeen(@RequestParam("text") String text){
+        System.out.println(Thread.currentThread().getId());
         asyncMessagePublisher.publish(new SimpleAzeronMessage("hi - async"), null);
         return "OK";
     }
